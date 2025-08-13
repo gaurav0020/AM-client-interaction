@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Sales Check-In</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: Arial; margin: 20px; }
+    select, button { width: 100%; padding: 10px; margin: 10px 0; font-size: 16px; }
+    button { background: #28a745; color: white; border: none; cursor: pointer; }
+    button.checkout { background: #dc3545; }
+  </style>
+</head>
+<body>
+  <h2>Sales Visit Tracking</h2>
+
+  <label>Salesperson</label>
+  <select id="salesperson">
+    <option value="Deepanshi">Deepanshi</option>
+    <option value="Vipul">Vipul</option>
+    <option value="Gaurav">Gaurav</option>
+  </select>
+
+  <label>Client</label>
+  <select id="client">
+    <option value="Office">Office</option>
+    <option value="gk winding">gk winding</option>
+    <option value="havells">havells</option>
+  </select>
+
+  <label>Visit Type</label>
+  <select id="visitType">
+    <option value="Client Visit">Client Visit</option>
+    <option value="Office">Office</option>
+    <option value="Other">Other</option>
+  </select>
+
+  <button onclick="submitData('Check-In')">Check-In</button>
+  <button class="checkout" onclick="submitData('Check-Out')">Check-Out</button>
+
+  <p id="statusMsg"></p>
+
+  <script>
+    const scriptURL = "https://script.google.com/macros/library/d/1opxBjR9AEKDp5xShuGjWmer9iRf8s3GY6xdHOITbQVz6mL7_7hbOdc7s/1"; 
+    function submitData(status) {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+          const data = {
+            salesperson: document.getElementById("salesperson").value,
+            client: document.getElementById("client").value,
+            visitType: document.getElementById("visitType").value,
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            status: status
+          };
+
+          fetch(scriptURL, {
+            method: 'POST',
+            body: JSON.stringify(data)
+          })
+          .then(res => res.json())
+          .then(response => {
+            document.getElementById("statusMsg").innerHTML = "✅ " + status + " recorded!";
+          })
+          .catch(err => {
+            document.getElementById("statusMsg").innerHTML = "❌ Error: " + err;
+          });
+        });
+      } else {
+        alert("Geolocation not supported by this device");
+      }
+    }
+  </script>
+</body>
+</html>
