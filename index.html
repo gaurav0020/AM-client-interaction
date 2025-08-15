@@ -1,72 +1,131 @@
-<script>
-  const salesSelect = document.getElementById('salesperson');
-  const clientSelect = document.getElementById('client');
-  const zoneSelect = document.getElementById('zone');
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Sales Team Check-in</title>
+  <meta charset="UTF-8" />
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    form { max-width: 400px; margin: auto; }
+    label { display: block; margin-top: 10px; }
+    select, input, button { width: 100%; padding: 8px; margin-top: 5px; }
+    #message { margin-top: 10px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h2>Sales Team Check-in</h2>
+  <form id="checkinForm">
+    <label for="salesperson">Salesperson:</label>
+    <select id="salesperson" name="salesperson" required>
+      <option value="">-- Select Salesperson --</option>
+    </select>
 
-  let customersData = [];
+    <label for="zone">Zone:</label>
+    <select id="zone" name="zone" required>
+      <option value="">-- Select Zone --</option>
+      <option value="North">North</option>
+      <option value="West">West</option>
+      <option value="South">South</option>
+    </select>
 
-  // Load salespersons list from salespersons.json (unchanged)
-  fetch('salespersons.json')
-    .then(response => response.json())
-    .then(data => {
-      data.forEach(name => {
+    <label for="client">Client:</label>
+    <select id="client" name="client" required>
+      <option value="">-- Select Client --</option>
+    </select>
+
+    <input type="hidden" id="latitude" name="latitude" />
+    <input type="hidden" id="longitude" name="longitude" />
+
+    <label for="visitType">Visit Type:</label>
+    <select id="visitType" name="visitType" required>
+      <option value="Meeting">Meeting</option>
+      <option value="Delivery">Delivery</option>
+      <option value="Follow-up">Follow-up</option>
+    </select>
+
+    <label for="status">Status:</label>
+    <select id="status" name="status" required>
+      <option value="Visited">Visited</option>
+      <option value="In Office">In Office</option>
+    </select>
+
+    <button type="submit">Check In</button>
+  </form>
+
+  <div id="message"></div>
+
+  <script>
+    const salesSelect = document.getElementById('salesperson');
+    const clientSelect = document.getElementById('client');
+    const zoneSelect = document.getElementById('zone');
+
+    let customersData = [];
+
+    // Load salespersons list from CSV
+    fetch('salespersons.csv')
+      .then(response => response.text())
+      .then(csvText => {
+        const rows = csvText.trim().split('\n').slice(1); // skip header
+        rows.forEach(row => {
+          const [name] = row.split(',');
+          const option = document.createElement('option');
+          option.value = name.trim();
+          option.textContent = name.trim();
+          salesSelect.appendChild(option);
+        });
+      });
+
+    // Load customers list from CSV
+    fetch('customers.csv')
+      .then(response => response.text())
+      .then(csvText => {
+        const rows = csvText.trim().split('\n').slice(1); // skip header
+        customersData = rows.map(row => {
+          const [name, zone] = row.split(',');
+          return { name: name.trim(), zone: zone.trim() };
+        });
+      });
+
+    // Filter customers when zone changes
+    zoneSelect.addEventListener('change', () => {
+      const selectedZone = zoneSelect.value;
+      clientSelect.innerHTML = "<option value=''>-- Select Client --</option>";
+      const filteredCustomers = customersData.filter(c => c.zone === selectedZone);
+
+      filteredCustomers.forEach(cust => {
         const option = document.createElement('option');
-        option.value = name;
-        option.textContent = name;
-        salesSelect.appendChild(option);
+        option.value = cust.name;
+        option.textContent = cust.name;
+        clientSelect.appendChild(option);
       });
     });
 
-  // Load customers list from CSV
-  fetch('customers.csv')
-    .then(response => response.text())
-    .then(csvText => {
-      const rows = csvText.trim().split('\n').slice(1); // skip header
-      customersData = rows.map(row => {
-        const [name, zone] = row.split(',');
-        return { name: name.trim(), zone: zone.trim() };
+    // Get GPS location
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(position => {
+        document.getElementById('latitude').value = position.coords.latitude;
+        document.getElementById('longitude').value = position.coords.longitude;
+      });
+    }
+
+    // Submit form
+    document.getElementById('checkinForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const formData = new FormData(this);
+      formData.append('timestamp', new Date().toISOString());
+
+      fetch('YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL', {
+        method: 'POST',
+        body: formData
+      })
+      .then(res => res.text())
+      .then(response => {
+        document.getElementById('message').textContent = "Check-in successful!";
+        this.reset();
+      })
+      .catch(err => {
+        document.getElementById('message').textContent = "Error: " + err;
       });
     });
-
-  // Filter customers when zone changes
-  zoneSelect.addEventListener('change', () => {
-    const selectedZone = zoneSelect.value;
-    clientSelect.innerHTML = "";
-    const filteredCustomers = customersData.filter(c => c.zone === selectedZone);
-
-    filteredCustomers.forEach(cust => {
-      const option = document.createElement('option');
-      option.value = cust.name;
-      option.textContent = cust.name;
-      clientSelect.appendChild(option);
-    });
-  });
-
-  // Get location
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(position => {
-      document.getElementById('latitude').value = position.coords.latitude;
-      document.getElementById('longitude').value = position.coords.longitude;
-    });
-  }
-
-  // Submit form
-  document.getElementById('checkinForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    const formData = new FormData(this);
-    formData.append('timestamp', new Date().toISOString());
-
-    fetch('YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL', {
-      method: 'POST',
-      body: formData
-    })
-    .then(res => res.text())
-    .then(response => {
-      document.getElementById('message').textContent = "Check-in successful!";
-      this.reset();
-    })
-    .catch(err => {
-      document.getElementById('message').textContent = "Error: " + err;
-    });
-  });
-</script>
+  </script>
+</body>
+</html>
