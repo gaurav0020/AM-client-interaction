@@ -1,174 +1,96 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>Sales Check-In</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-      max-width: 500px;
-    }
-    label {
-      display: block;
-      margin-top: 10px;
-    }
-    select, button {
-      width: 100%;
-      padding: 8px;
-      margin-top: 5px;
-    }
-    .hidden {
-      display: none;
-    }
-  </style>
+    <title>Salesperson Check-in</title>
 </head>
 <body>
-  <h2>Sales Check-In</h2>
+    <h2>Check-in Form</h2>
+    <form id="checkinForm">
+        <label for="salesperson">Salesperson:</label>
+        <select name="salesperson" id="salesperson"></select><br><br>
 
-  <form id="checkinForm">
-    <label>Salesperson</label>
-    <select id="salesperson" required>
-      <option value="">-- Select Salesperson --</option>
-    </select>
+        <label for="zone">Zone:</label>
+        <select name="zone" id="zone">
+            <option value="">Select Zone</option>
+            <option value="North">North</option>
+            <option value="West">West</option>
+            <option value="South">South</option>
+        </select><br><br>
 
-    <label>Zone</label>
-    <select id="zone" required>
-      <option value="">-- Select Zone --</option>
-      <option value="North">North</option>
-      <option value="West">West</option>
-      <option value="South">South</option>
-    </select>
+        <label for="customer">Customer:</label>
+        <select name="customer" id="customer"></select><br><br>
 
-    <label>Customer</label>
-    <select id="customer" required>
-      <option value="">-- Select Customer --</option>
-    </select>
+        <label for="status">Status:</label>
+        <select name="status" id="status">
+            <option value="Visited">Visited</option>
+            <option value="Visiting Today">Visiting Today</option>
+        </select><br><br>
 
-<!--     <label>Visit Type</label>
-    <select id="visitType" required>
-      <option value="">-- Select Visit Type --</option>
-      <option value="Visit">Visit</option>
-      <option value="Call">Call</option>
-    </select> -->
+        <input type="hidden" name="latitude" id="latitude">
+        <input type="hidden" name="longitude" id="longitude">
 
-    <label>Status</label>
-    <select id="status" required>
-      <option value="">-- Select Status --</option>
-      <option value="Visiting today">Visiting today</option>
-      <option value="Visited">Visited</option>
-    </select>
+        <button type="submit">Check In</button>
+    </form>
 
-    <button type="submit">Check In</button>
-  </form>
+    <script>
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzxau3a3qX0jRav1wIwVm5Rj6OqpajxoZ61G_WuMbDlVDhVrLGRmRzMy3wHySKs6tKnnw/exec";
 
-  <script>
-    const salesSelect = document.getElementById('salesperson');
-    const zoneSelect = document.getElementById('zone');
-    const customerSelect = document.getElementById('customer');
-    let customersData = [];
+        // Load Salesperson list
+        fetch('salespersons.json')
+            .then(res => res.json())
+            .then(data => {
+                let spSelect = document.getElementById('salesperson');
+                data.forEach(sp => {
+                    let opt = document.createElement('option');
+                    opt.value = sp.name;
+                    opt.textContent = sp.name;
+                    spSelect.appendChild(opt);
+                });
+            });
 
-    // Load salespersons from CSV
-    fetch('./salespersons.csv')
-      .then(r => {
-        if (!r.ok) throw new Error('Failed to load salespersons.csv');
-        return r.text();
-      })
-      .then(text => {
-        const rows = text.replace(/\r/g, '').trim().split('\n');
-        const headers = rows[0].split(',').map(h => h.trim().toLowerCase());
-        const nameIndex = headers.indexOf('name');
-        if (nameIndex === -1) throw new Error("CSV must have 'name' column");
-
-        rows.slice(1).forEach(row => {
-          const cols = row.split(',');
-          const name = (cols[nameIndex] || '').trim();
-          if (name) {
-            const opt = document.createElement('option');
-            opt.value = name;
-            opt.textContent = name;
-            salesSelect.appendChild(opt);
-          }
+        // Load Customers CSV & filter by zone
+        document.getElementById('zone').addEventListener('change', function () {
+            let zone = this.value;
+            fetch('customers.csv')
+                .then(res => res.text())
+                .then(text => {
+                    let rows = text.split('\n').map(r => r.split(','));
+                    let custSelect = document.getElementById('customer');
+                    custSelect.innerHTML = '';
+                    rows.forEach(r => {
+                        if (r[1] && r[1].trim() === zone) {
+                            let opt = document.createElement('option');
+                            opt.value = r[0];
+                            opt.textContent = r[0];
+                            custSelect.appendChild(opt);
+                        }
+                    });
+                });
         });
-      })
-      .catch(err => alert(err.message));
 
-    // Load customers from CSV
-    fetch('./customers.csv')
-      .then(r => {
-        if (!r.ok) throw new Error('Failed to load customers.csv');
-        return r.text();
-      })
-      .then(text => {
-        const rows = text.replace(/\r/g, '').trim().split('\n');
-        const headers = rows[0].split(',').map(h => h.trim().toLowerCase());
-        const nameIndex = headers.indexOf('customer');
-        const zoneIndex = headers.indexOf('zone');
-        if (nameIndex === -1 || zoneIndex === -1)
-          throw new Error("CSV must have 'customer' and 'zone' columns");
-
-        customersData = rows.slice(1).map(row => {
-          const cols = row.split(',');
-          return {
-            name: (cols[nameIndex] || '').trim(),
-            zone: (cols[zoneIndex] || '').trim()
-          };
+        // Capture location
+        navigator.geolocation.getCurrentPosition(position => {
+            document.getElementById('latitude').value = position.coords.latitude;
+            document.getElementById('longitude').value = position.coords.longitude;
         });
-      })
-      .catch(err => alert(err.message));
 
-    // Filter customers when zone changes
-    zoneSelect.addEventListener('change', () => {
-      customerSelect.innerHTML = '<option value="">-- Select Customer --</option>';
-      const zone = zoneSelect.value;
-      customersData
-        .filter(c => c.zone.toLowerCase() === zone.toLowerCase())
-        .forEach(c => {
-          const opt = document.createElement('option');
-          opt.value = c.name;
-          opt.textContent = c.name;
-          customerSelect.appendChild(opt);
+        // Submit form
+        document.getElementById('checkinForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            fetch(WEB_APP_URL, {
+                method: 'POST',
+                body: new FormData(this)
+            })
+            .then(res => res.text())
+            .then(data => {
+                alert("Check-in successful!");
+                this.reset();
+            })
+            .catch(err => {
+                console.error(err);
+                alert("Error during check-in");
+            });
         });
-    });
-
-    // Handle form submission
-    document.getElementById('checkinForm').addEventListener('submit', e => {
-      e.preventDefault();
-
-      if (!navigator.geolocation) {
-        alert('Geolocation not supported by this browser');
-        return;
-      }
-
-      navigator.geolocation.getCurrentPosition(pos => {
-        const data = {
-          timestamp: new Date().toISOString(),
-          salesperson: salesSelect.value,
-          zone: zoneSelect.value,
-          customer: customerSelect.value,
-          visitType: document.getElementById('visitType').value,
-          status: document.getElementById('status').value,
-          latitude: pos.coords.latitude,
-          longitude: pos.coords.longitude
-        };
-
-        fetch('https://script.google.com/macros/s/AKfycbwrNV0cDTycdPtBU5j93dTfVy0H6mwiX8M0kVEnC8dUpVSSOuDFQARtYnNvzO-93NqsZQ/exec', {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data)
-        }).then(() => {
-          alert('Check-in submitted!');
-          e.target.reset();
-        }).catch(err => alert('Error submitting data: ' + err));
-      });
-    });
-  </script>
+    </script>
 </body>
 </html>
-
-
-
-
-
-
