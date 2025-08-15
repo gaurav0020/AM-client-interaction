@@ -1,7 +1,7 @@
 [
-  "Rahul Verma",
-  "Priya Singh",
-  "Rohan Mehta",
-  "Anjali Gupta",
-  "Vikram Sharma"
+    { "name": "John Doe" },
+    { "name": "Jane Smith" },
+    { "name": "Amit Kumar" }
 ]
+
+
