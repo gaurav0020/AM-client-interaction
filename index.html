@@ -1,76 +1,103 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Sales Check-In</title>
+  <title>Sales Visit Check-in</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body { font-family: Arial; margin: 20px; }
-    select, button { width: 100%; padding: 10px; margin: 10px 0; font-size: 16px; }
-    button { background: #28a745; color: white; border: none; cursor: pointer; }
-    button.checkout { background: #dc3545; }
+    body { font-family: Arial, sans-serif; max-width: 500px; margin: auto; padding: 10px; }
+    label { display: block; margin-top: 10px; font-weight: bold; }
+    select, input, button { width: 100%; padding: 8px; margin-top: 5px; }
+    button { background-color: #4CAF50; color: white; border: none; cursor: pointer; }
+    button:hover { background-color: #45a049; }
   </style>
 </head>
 <body>
-  <h2>Sales Visit Tracking</h2>
+  <h2>Sales Visit Check-in</h2>
 
-  <label>Salesperson</label>
-  <select id="salesperson">
-    <option value="Deepanshi">Deepanshi</option>
-    <option value="Vipul">Vipul</option>
-    <option value="Gaurav">Gaurav</option>
-  </select>
+  <form id="checkinForm">
+    <label for="salesperson">Salesperson:</label>
+    <select id="salesperson" name="salesperson" required></select>
 
-  <label>Client</label>
-  <select id="client">
-    <option value="Office">Office</option>
-    <option value="gk winding">gk winding</option>
-    <option value="havells">havells</option>
-  </select>
+    <label for="client">Client:</label>
+    <select id="client" name="client" required></select>
 
-  <label>Visit Type</label>
-  <select id="visitType">
-    <option value="Client Visit">Client Visit</option>
-    <option value="Office">Office</option>
-    <option value="Other">Other</option>
-  </select>
+    <label for="visitType">Visit Type:</label>
+    <select id="visitType" name="visitType" required>
+      <option value="Visit">Visit</option>
+      <option value="Meeting">Meeting</option>
+      <option value="Office Work">Office Work</option>
+    </select>
 
-  <button onclick="submitData('Check-In')">Check-In</button>
-  <button class="checkout" onclick="submitData('Check-Out')">Check-Out</button>
+    <label for="status">Status:</label>
+    <select id="status" name="status" required>
+      <option value="Visiting">Visiting</option>
+      <option value="In Office">In Office</option>
+      <option value="Missed Visit">Missed Visit</option>
+    </select>
 
-  <p id="statusMsg"></p>
+    <input type="hidden" id="latitude" name="latitude">
+    <input type="hidden" id="longitude" name="longitude">
+
+    <button type="submit">Check In</button>
+  </form>
+
+  <p id="message"></p>
 
   <script>
-    const scriptURL = "https://script.google.com/macros/s/AKfycby_inDdMw740O8U-L0WZ6BkAzY_h3z_vThAgqvGqN3nBFsde3bXWhYLKyKLwdMIlBBXGQ/exec"; 
-    function submitData(status) {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(function(position) {
-          const data = {
-            salesperson: document.getElementById("salesperson").value,
-            client: document.getElementById("client").value,
-            visitType: document.getElementById("visitType").value,
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-            status: status
-          };
+    const salesSelect = document.getElementById('salesperson');
+    const clientSelect = document.getElementById('client');
 
-          fetch(scriptURL, {
-            method: 'POST',
-            body: JSON.stringify(data)
-          })
-          .then(res => res.json())
-          .then(response => {
-            document.getElementById("statusMsg").innerHTML = "✅ " + status + " recorded!";
-          })
-          .catch(err => {
-            document.getElementById("statusMsg").innerHTML = "❌ Error: " + err;
-          });
+    // Load salespersons list
+    fetch('salespersons.json')
+      .then(response => response.json())
+      .then(data => {
+        data.forEach(name => {
+          const option = document.createElement('option');
+          option.value = name;
+          option.textContent = name;
+          salesSelect.appendChild(option);
         });
-      } else {
-        alert("Geolocation not supported by this device");
-      }
+      });
+
+    // Load customers list
+    fetch('customers.json')
+      .then(response => response.json())
+      .then(data => {
+        data.forEach(name => {
+          const option = document.createElement('option');
+          option.value = name;
+          option.textContent = name;
+          clientSelect.appendChild(option);
+        });
+      });
+
+    // Get location
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(position => {
+        document.getElementById('latitude').value = position.coords.latitude;
+        document.getElementById('longitude').value = position.coords.longitude;
+      });
     }
+
+    // Submit form
+    document.getElementById('checkinForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const formData = new FormData(this);
+      formData.append('timestamp', new Date().toISOString());
+
+      fetch('YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL', {
+        method: 'POST',
+        body: formData
+      })
+      .then(res => res.text())
+      .then(response => {
+        document.getElementById('message').textContent = "Check-in successful!";
+        this.reset();
+      })
+      .catch(err => {
+        document.getElementById('message').textContent = "Error: " + err;
+      });
+    });
   </script>
 </body>
 </html>
-
-
