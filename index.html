@@ -28,7 +28,7 @@
             display: block;
             color: #444;
         }
-        select, button {
+        select, input, button {
             width: 100%;
             padding: 10px;
             margin-top: 6px;
@@ -63,17 +63,8 @@
             <label for="salesperson">Salesperson</label>
             <select name="salesperson" id="salesperson" required></select>
 
-            <label for="zone">Zone</label>
-            <select name="zone" id="zone" required>
-                <option value="">Select Zone</option>
-                <option value="North">North</option>
-                <option value="West">West</option>
-                <option value="South">South</option>
-                 <option value="East">East</option>
-            </select>
-
-            <label for="customer">Customer</label>
-            <select name="customer" id="customer" required></select>
+            <label for="customer">Client</label>
+            <input type="text" name="customer" id="customer" placeholder="Enter client name" required>
 
             <label for="status">Status</label>
             <select name="status" id="status" required>
@@ -92,7 +83,7 @@
     <script>
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzxau3a3qX0jRav1wIwVm5Rj6OqpajxoZ61G_WuMbDlVDhVrLGRmRzMy3wHySKs6tKnnw/exec";
 
-        // Load Salesperson list
+        // Load Salesperson list from JSON
         fetch('salespersons.json')
             .then(res => res.json())
             .then(data => {
@@ -105,26 +96,6 @@
                     spSelect.appendChild(opt);
                 });
             });
-
-        // Load Customers CSV & filter by zone
-        document.getElementById('zone').addEventListener('change', function () {
-            let zone = this.value;
-            fetch('customers.csv')
-                .then(res => res.text())
-                .then(text => {
-                    let rows = text.split('\n').map(r => r.split(','));
-                    let custSelect = document.getElementById('customer');
-                    custSelect.innerHTML = '<option value="">Select Customer</option>';
-                    rows.forEach(r => {
-                        if (r[1] && r[1].trim() === zone) {
-                            let opt = document.createElement('option');
-                            opt.value = r[0];
-                            opt.textContent = r[0];
-                            custSelect.appendChild(opt);
-                        }
-                    });
-                });
-        });
 
         // Capture location
         navigator.geolocation.getCurrentPosition(position => {
@@ -152,4 +123,3 @@
     </script>
 </body>
 </html>
-
