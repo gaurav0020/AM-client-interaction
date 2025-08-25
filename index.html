@@ -63,63 +63,14 @@
             <label for="salesperson">Salesperson</label>
             <select name="salesperson" id="salesperson" required></select>
 
-            <label for="customer">Client</label>
-            <input type="text" name="customer" id="customer" placeholder="Enter client name" required>
-
-            <label for="status">Status</label>
-            <select name="status" id="status" required>
-                <option value="Visited">Visited</option>
-                <option value="Visiting Today">Visiting Today</option>
+            <label for="zone">Zone</label>
+            <select name="zone" id="zone" required>
+                <option value="">Select Zone</option>
+                <option value="North">North</option>
+                <option value="West">West</option>
+                <option value="South">South</option>
+                <option value="East">East</option>
             </select>
 
-            <input type="hidden" name="latitude" id="latitude">
-            <input type="hidden" name="longitude" id="longitude">
-
-            <button type="submit">Check In</button>
-        </form>
-        <div class="note">Your location will be automatically captured</div>
-    </div>
-
-    <script>
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzxau3a3qX0jRav1wIwVm5Rj6OqpajxoZ61G_WuMbDlVDhVrLGRmRzMy3wHySKs6tKnnw/exec";
-
-        // Load Salesperson list from JSON
-        fetch('salespersons.json')
-            .then(res => res.json())
-            .then(data => {
-                let spSelect = document.getElementById('salesperson');
-                spSelect.innerHTML = '<option value="">Select Salesperson</option>';
-                data.forEach(sp => {
-                    let opt = document.createElement('option');
-                    opt.value = sp.name;
-                    opt.textContent = sp.name;
-                    spSelect.appendChild(opt);
-                });
-            });
-
-        // Capture location
-        navigator.geolocation.getCurrentPosition(position => {
-            document.getElementById('latitude').value = position.coords.latitude;
-            document.getElementById('longitude').value = position.coords.longitude;
-        });
-
-        // Submit form
-        document.getElementById('checkinForm').addEventListener('submit', function (e) {
-            e.preventDefault();
-            fetch(WEB_APP_URL, {
-                method: 'POST',
-                body: new FormData(this)
-            })
-            .then(res => res.text())
-            .then(data => {
-                alert("✅ Check-in successful!");
-                this.reset();
-            })
-            .catch(err => {
-                console.error(err);
-                alert("❌ Error during check-in");
-            });
-        });
-    </script>
-</body>
-</html>
+            <label for="customer">Client</label>
+            <input type="text" name="custom
